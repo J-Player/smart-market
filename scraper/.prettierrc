@@ -1,0 +1,12 @@
+{
+	"semi": false,
+	"singleQuote": true,
+	"bracketSameLine": true,
+	"objectWrap": "collapse",
+	"endOfLine": "crlf",
+	"singleAttributePerLine": false,
+	"trailingComma": "none",
+	"useTabs": true,
+	"arrowParens": "avoid",
+	"printWidth": 120
+}

@@ -1,0 +1,64 @@
+@reference "../../styles/global.css";
+
+#header {
+	.menu {
+		@apply flex min-w-full;
+		ul {
+			@apply flex h-full w-full justify-around;
+			li {
+				@apply grid;
+				a {
+					@apply content-center px-[10px];
+				}
+			}
+		}
+	}
+}
+
+section {
+	@apply px-[114px] py-[56px];
+	@apply text-dark-green;
+	h1,
+	h1 * {
+		@apply text-4xl;
+	}
+	h2 {
+		@apply text-3xl;
+	}
+}
+
+section#home {
+	@apply flex items-center gap-[50px];
+	.content {
+		@apply max-w-min;
+		@apply flex flex-col gap-[10px];
+		@apply text-xl;
+		div {
+			@apply flex items-center gap-[10px];
+			@apply text-nowrap;
+			#btn-start {
+				@apply bg-green border-dark-green;
+				@apply rounded-[3px] border px-[10px] py-[5px] drop-shadow-[0_4px_4px_rgb(0_0_0_/_0.1)];
+				&:hover {
+					background-image: linear-gradient(rgb(0 0 0/5%) 0 0);
+				}
+			}
+		}
+	}
+}
+
+section#about {
+	@apply grid place-items-center px-[10vw];
+	h2 {
+		@apply font-bold uppercase;
+	}
+	& > div {
+		@apply grid h-full grid-cols-2 place-items-center bg-white px-[76px];
+		& > * {
+			@apply w-full;
+		}
+		.image-wrapper {
+			@apply grid place-items-center;
+		}
+	}
+}

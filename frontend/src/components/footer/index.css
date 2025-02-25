@@ -1,0 +1,7 @@
+@reference "../../styles/global.css";
+
+#footer {
+	@apply grid place-items-center;
+	@apply bg-black font-bold text-white;
+	@apply min-h-[10vh];
+}

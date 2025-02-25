@@ -1,0 +1,11 @@
+services:
+  smartmarket-rabbitmq:
+    build: .
+    ports:
+      - "5672:5672" # RabbitMQ default port
+      - "15672:15672" # RabbitMQ management UI
+    networks:
+      - messaging
+networks:
+  messaging:
+    driver: bridge

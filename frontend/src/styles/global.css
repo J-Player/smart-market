@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'tailwindcss';
+
+@theme {
+	--text-sm: 0.8125rem;
+	--text-lg: 1.25rem;
+	--text-xl: 1.5625rem;
+	--text-2xl: 1.9375rem;
+	--text-3xl: 2.4375rem;
+	--text-4xl: 3.0625rem;
+	--text-5xl: 3.8125rem;
+
+	--color-green: #00ff80;
+	--color-dark-green: #004020;
+	--color-light-green: #f2fff9;
+	--color-pink: #ff003f;
+	--color-dark-pink: #400010;
+	--color-light-pink: #ffbfcf;
+}
+
+:root {
+	font-family: 'Montserrat', sans-serif;
+	line-height: 150%;
+}
+
+body {
+	background-color: var(--color-light-green);
+	position: relative;
+	&::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		opacity: 0.05;
+		background-image: url('images/seamless.png');
+		background-repeat: repeat;
+		background-size: 10%;
+	}
+}
+
+button {
+	cursor: pointer;
+	&:hover {
+		background-image: linear-gradient(rgb(0 0 0/5%) 0 0);
+	}
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+}
