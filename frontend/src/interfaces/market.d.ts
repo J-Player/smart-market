@@ -1,5 +1,5 @@
 export interface Market {
-	id: string
-	name: string
-	website: string
+	readonly id: string
+	readonly name: string
+	readonly website: string
 }

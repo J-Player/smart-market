@@ -1,0 +1,9 @@
+.login-form {
+	@apply mx-auto my-3 flex min-h-[60vh] min-w-[60vh] flex-col items-center justify-center gap-4 text-xl;
+	form {
+		@apply gap-[inherit] self-center;
+	}
+	span > button {
+		@apply text-orange cursor-pointer border-none bg-transparent outline-none hover:underline focus:underline;
+	}
+}

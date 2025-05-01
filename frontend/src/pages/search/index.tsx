@@ -1,23 +1,62 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, HTMLAttributes, useEffect, useState } from 'react'
 import axios from '../../api/axios'
 import Header from '../../components/header'
+import Modal from '../../components/modal'
 import MultiSelect from '../../components/multiselect'
 import Section from '../../components/section'
 import { usePersistedState } from '../../hooks/usePersistedState'
 import { Market } from '../../interfaces/market'
-import { MarketProduct } from '../../interfaces/market-product'
 import { Product } from '../../interfaces/product'
+import { ProductMapper } from '../../mappers/product-mapper'
+import { Product as ProductModel } from '../../models/product'
 import MarketProductService from '../../services/market-product-service'
 import MarketService from '../../services/market-service'
 import ProductService from '../../services/product-service'
-import './index.css'
+import ShoppingList from './shopping-list'
+import Input from '../../components/input'
+import Button from '../../components/button'
+import { normalizeText } from '../../utils/string-helper'
+import { cn } from '../../utils/cn'
+
+const initial: ProductModel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
+	v =>
+		new ProductModel({
+			id: `${v}`,
+			name: `produto_${v}`,
+			active: true,
+			market: `mercado_${Math.round(Math.random() * 10)}`,
+			price: Math.round(Math.random() * 10),
+			offers: []
+		})
+)
+
+const initialMarket: Market[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
+	(v, index) =>
+		({
+			id: `${index}`,
+			name: `mercado_${v}`,
+			website: `www.${normalizeText(`${v}`).toLowerCase()}.com.br`
+		}) as Market
+)
+
+const Tag = ({ children, className }: HTMLAttributes<HTMLSpanElement>) => {
+	return (
+		<span
+			className={cn('bg-green border-dark-green flex items-center gap-[5px] rounded-[3px] border p-[5px]', className)}>
+			{children}
+		</span>
+	)
+}
 
 const SearchPage = () => {
 	const [products, setProducts] = usePersistedState<Product[]>('product-list', [], 'sessionstorage')
-	const [markets, setMarkets] = usePersistedState<Market[]>('market-list', [], 'sessionstorage')
-	const [shoppingList, setShoppingList] = usePersistedState<MarketProduct[]>('shopping-list', [], 'localstorage')
+	const [markets, setMarkets] = usePersistedState<Market[]>('market-list', initialMarket, 'sessionstorage')
 	const [quantity, setQuantity] = useState<number | undefined>()
-	const [result, setResult] = useState<MarketProduct[]>([])
+	const [displayValue, setDisplayValue] = useState('')
+	const [shoppingList, setShoppingList] = usePersistedState<ProductModel[]>('shopping-list', [], 'localstorage')
+	const [showShoppingList, setShowShoppingList] = useState<boolean>(false)
+	const [hideItemAdded, setHideItemAdded] = useState<boolean>(false)
+	const [result, setResult] = useState<ProductModel[]>(initial)
 
 	const [product, setProduct] = useState<string>('')
 	const [marketsSelected, setMarketsSeleted] = useState<string[]>([])
@@ -26,7 +65,7 @@ const SearchPage = () => {
 	const visibleTags = marketsSelected.slice(0, MAX_VISIBLE_TAGS)
 	const hiddenCount = marketsSelected.length - MAX_VISIBLE_TAGS
 
-	const [sortBy, setSortBy] = usePersistedState<keyof MarketProduct>('sort', 'price', 'localstorage')
+	const [sortBy, setSortBy] = usePersistedState<keyof ProductModel>('sort', 'price', 'localstorage')
 	const [sortDir, setSortDir] = usePersistedState<'asc' | 'desc'>('sort-direction', 'asc', 'localstorage')
 
 	const sortedResult = [...result]
@@ -49,12 +88,25 @@ const SearchPage = () => {
 			return 0
 		})
 
-	const getSortClass = (column: string) => {
+	const getSortClass = (column: keyof ProductModel) => {
 		if (sortBy !== column) return ''
-		return sortDir === 'asc' ? 'asc' : 'desc'
+		const directionClass = sortDir === 'asc' ? 'after:content-["⬇"]' : 'after:content-["⬆"]'
+		return `text-green after:ml-1 ${directionClass}`
 	}
 
-	const handleSort = (field: keyof MarketProduct) => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const val: string = e.target.value
+			// Remove todos os caracteres não numéricos
+			.replace(/[^0-9]/g, '')
+			// Remove zeros à esquerda (exceto se for o único caractere)
+			.replace(/^0+(?=\d)/, '')
+
+		// Atualiza os estados
+		setDisplayValue(val)
+		setQuantity(val.length === 0 ? 0 : Number(val))
+	}
+
+	const handleSort = (field: keyof ProductModel) => {
 		if (sortBy === field) {
 			setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'))
 		} else {
@@ -73,24 +125,26 @@ const SearchPage = () => {
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		const marketProductService = new MarketProductService(axios)
-		marketProductService.findAll(product, marketsSelected).then(res => setResult(res.data))
+		marketProductService.findAll(product, marketsSelected).then(res => setResult(res.data.map(ProductMapper.toDomain)))
 	}
 
-	const addItemToList = (p: MarketProduct) => {
+	const addItemToList = (p: ProductModel) => {
 		setShoppingList(prev => {
-			const index = prev.findIndex(i => i.id == p.id)
-			if (index !== -1) prev.push(p)
-			else console.log(`ERROR: id ${p.id} já existe na lista de compras...`)
+			// Verifica se o item já existe na lista
+			const itemExists = prev.some(item => item.id === p.id)
+			// Se não existir, retorna um NOVO array com o item adicionado
+			if (!itemExists) {
+				if (quantity) p.quantity = quantity
+				return [...prev, p]
+			}
+			// Se já existir, retorna o array sem modificações
 			return prev
 		})
 	}
 
-	const subItemToList = (p: MarketProduct) => {
+	const subItemToList = (p: ProductModel) => {
 		setShoppingList(prev => {
-			const index = prev.findIndex(i => i.id == p.id)
-			if (index === -1) prev.splice(index, 1)
-			else console.log(`ERROR: id ${p.id} não encontrado na lista de compras...`)
-			return prev
+			return prev.filter(i => i.id !== p.id)
 		})
 	}
 
@@ -105,137 +159,194 @@ const SearchPage = () => {
 			marketService.findAll().then(res => {
 				if (Array.isArray(res.data)) setMarkets(res.data)
 			})
-	}, [])
+	})
+
+	useEffect(() => {
+		setResult(prev => {
+			return prev.map(p => {
+				if (!shoppingList.find(i => p.id === i.id)) p.quantity = quantity || 1
+				return p
+			})
+		})
+	}, [quantity, shoppingList])
+
+	type TableColumn = {
+		key: keyof ProductModel
+		label: string
+	}
+
+	const COLUMNS: TableColumn[] = [
+		{ key: 'name', label: 'Produto' },
+		{ key: 'price', label: 'Preço (un)' },
+		{ key: 'total_price', label: 'Preço (total)' },
+		{ key: 'market', label: 'Mercado' },
+		{ key: 'offers', label: 'Ofertas' }
+	]
 
 	return (
 		<>
 			<Header hrefLogo="/" />
 			<Section id="search">
-				<div className="search-container">
-					<div className="content-wrapper">
-						<div className="form-wrapper">
-							<form method="post" onReset={handleReset} onSubmit={handleSubmit}>
-								<div>
-									<label htmlFor="product">Produto:</label>
-									<input id="product" type="text" value={product} onChange={e => setProduct(e.currentTarget.value)} />
-								</div>
-								<div>
-									<label htmlFor="select_market">Mercados:</label>
-									<MultiSelect<Market>
-										options={markets}
-										getLabel={item => item.name}
-										getValue={item => item.id}
-										selectedValues={marketsSelected}
-										onChange={setMarketsSeleted}
-										placeholder=""
-									/>
-								</div>
-								<div className="tag-wrapper">
-									{visibleTags.map(id => {
-										const item = markets.find(i => i.id === id)
-										if (!item) return null
-										return (
-											<span className="tag" key={id}>
-												<span>{item.name}</span>
-												<button onClick={() => setMarketsSeleted(prev => prev.filter(val => val !== id))}>×</button>
-											</span>
-										)
-									})}
-									{hiddenCount > 0 && (
-										<span
-											className="tag"
-											title={marketsSelected
-												.slice(MAX_VISIBLE_TAGS)
-												.map(id => {
-													const item = markets.find(i => i.id === id)
-													return item ? item.name : ''
-												})
-												.join('\n')}>
-											+{hiddenCount} mercados
-										</span>
-									)}
-									{visibleTags.length > 0 && <button onClick={() => setMarketsSeleted([])}>✖</button>}
-								</div>
-								<div>
-									<button type="reset">Limpar</button>
-									<button type="submit">Pesquisar</button>
-								</div>
-							</form>
-						</div>
+				<div className="grid min-h-[100vh] place-items-center bg-white p-[10vh]">
+					<div className="relative flex flex-col gap-[10px]">
+						<form className="flex flex-col gap-[inherit]" method="post" onReset={handleReset} onSubmit={handleSubmit}>
+							<div className="flex items-center gap-[inherit]">
+								<label htmlFor="product">Produto:</label>
+								<Input
+									className="w-full"
+									id="product"
+									type="text"
+									value={product}
+									onChange={e => setProduct(e.currentTarget.value)}
+									placeholder="Digite o nome, tipo ou marca de um produto"
+								/>
+							</div>
+							<div className="flex items-center gap-[inherit]">
+								<label htmlFor="markets">Mercados:</label>
+								<MultiSelect<Market>
+									id="markets"
+									className="w-full"
+									options={markets}
+									getLabel={item => item.name}
+									getValue={item => item.id}
+									selectedValues={marketsSelected}
+									onChangeValues={setMarketsSeleted}
+									placeholder="Escolha um ou mais mercados"
+								/>
+							</div>
+							<div className="flex w-fit flex-wrap gap-[inherit]">
+								{visibleTags.map(id => {
+									const item = markets.find(market => market.id === id)
+									if (!item) return null
+									return (
+										<Tag key={id}>
+											<span>{item.name}</span>
+											<Button
+												className="[&:hover]:text-pink flex aspect-square max-h-fit items-center rounded-none border-none bg-transparent p-0"
+												onClick={() => setMarketsSeleted(prev => prev.filter(val => val !== id))}>
+												<small>✖</small>
+											</Button>
+										</Tag>
+									)
+								})}
+								{hiddenCount > 0 && (
+									<Tag
+										title={marketsSelected
+											.slice(MAX_VISIBLE_TAGS)
+											.map(id => {
+												const market = markets.find(m => m.id === id)
+												return market ? market.name : ''
+											})
+											.join('\n')}>
+										+{hiddenCount} mercados
+									</Tag>
+								)}
+								{visibleTags.length > 0 && (
+									<Button
+										className="[&:hover]:text-pink border-none bg-transparent"
+										onClick={() => setMarketsSeleted([])}>
+										✖
+									</Button>
+								)}
+							</div>
+							<div className="mx-auto flex gap-[inherit]">
+								<Button type="reset">Limpar</Button>
+								<Button type="submit" $primary>
+									Pesquisar
+								</Button>
+							</div>
+						</form>
 						{result.length > 0 && (
-							<div className="result-wrapper">
-								<div>
-									<span>
-										Ocultar itens que já estão na lista de compras:{' '}
-										<input type="checkbox" name="hide-listed-item" id="hide-listed-item" />
-									</span>
+							<div className="flex w-full flex-col items-center gap-[inherit]">
+								<div className="flex items-center gap-[inherit]">
+									<label htmlFor="hide-listed-item">Ocultar itens que já estão na lista de compras:</label>
+									<Input
+										className="cursor-pointer"
+										type="checkbox"
+										id="hide-listed-item"
+										onChange={e => setHideItemAdded(e.target.checked)}
+									/>
 									<label htmlFor="quantity">Quantidade:</label>
-									<input
-										type="number"
+									<Input
+										type="text"
 										inputMode="numeric"
 										pattern="[0-9]*"
 										name="quantity"
 										id="quantity"
-										value={quantity}
-										onChange={e => {
-											const val = e.target.value.replace(/[^0-9]/g, '').replace(/^0+/, '')
-											setQuantity(Number(val || 0))
-										}}
+										value={displayValue}
+										onChange={handleChange}
+										required
 									/>
-									<button disabled={!quantity}>Otimizar</button>
 								</div>
-								<table>
-									<thead>
+								<table className="relative w-full border-collapse border text-nowrap">
+									<thead className="bg-dark-green text-light-green sticky top-[calc(10vh_-_1px)] z-2">
 										<tr>
-											<th className={getSortClass('name')} onClick={() => handleSort('name')}>
-												Produto
-											</th>
-											<th className={getSortClass('price')} onClick={() => handleSort('price')}>
-												Preço (un)
-											</th>
-											<th className={getSortClass('market')} onClick={() => handleSort('market')}>
-												Mercado
-											</th>
-											<th className={getSortClass('offers')} onClick={() => handleSort('offers')}>
-												Ofertas
-											</th>
+											{COLUMNS.map((o, index) => {
+												return (
+													<th
+														className={cn(getSortClass(o.key), 'cursor-pointer p-[10px]')}
+														onClick={() => handleSort(o.key)}
+														key={index}>
+														{o.label}
+													</th>
+												)
+											})}
 											<th></th>
 										</tr>
 									</thead>
 									<tbody>
 										{sortedResult
 											.filter(p => p.active)
-											.map(p => {
+											.map((p, key) => {
 												return (
-													<tr>
-														<td>{p.name}</td>
-														<td>{p.price}</td>
-														<td>{p.price && quantity ? p.price * quantity : ''}</td>
-														<td>{p.market}</td>
-														<td>{p.offers.length}</td>
-														<td>
-															<button className="add" onClick={() => addItemToList(p)}>
-																➕
-															</button>
-															<button className="sub" onClick={() => subItemToList(p)}>
-																➖
-															</button>
-														</td>
-													</tr>
+													!(shoppingList.find(i => i.id === p.id) && hideItemAdded) && (
+														<tr
+															className={cn(
+																'border-y [&>td]:p-[10px] [&>td]:text-center',
+																shoppingList.find(i => i.id === p.id)
+																	? 'bg-light-pink text-dark-pink'
+																	: 'text-dark-green [&:hover]:bg-light-green'
+															)}
+															key={key}>
+															<td>{p.name}</td>
+															<td>R$ {p.price?.toFixed(2)}</td>
+															<td>R$ {p.total_price.toFixed(2)}</td>
+															<td>{p.market}</td>
+															<td>{p.offers.length}</td>
+															<td className="[&_button]:relative [&_button]:p-[5px] [&_button:after]:absolute [&_button:after]:inset-0 [&_button:after]:mix-blend-overlay [&_button:after]:content-['']">
+																{!shoppingList.find(i => i.id === p.id) ? (
+																	<Button
+																		className="bg-green border-dark-green [&:after]:bg-dark-green"
+																		onClick={() => addItemToList(p)}
+																		disabled={!quantity}>
+																		➕
+																	</Button>
+																) : (
+																	<Button
+																		className="bg-pink border-dark-pink [&:after]:bg-dark-pink"
+																		onClick={() => subItemToList(p)}>
+																		➖
+																	</Button>
+																)}
+															</td>
+														</tr>
+													)
 												)
 											})}
 									</tbody>
 								</table>
 							</div>
 						)}
-						<button className="btn-list">
+						<Button
+							className="fixed right-[10%] bottom-[10vw] z-20 rounded-[50%] p-[10px]"
+							onClick={() => setShowShoppingList(true)}>
 							<img src="icons/list.png" alt="list" />
-						</button>
+						</Button>
 					</div>
 				</div>
-				<button>
-					<img src="images/list.svg" alt="list" />
-				</button>
+				<Modal show={showShoppingList} onClose={() => setShowShoppingList(false)}>
+					<ShoppingList items={shoppingList} removeItem={subItemToList} />
+				</Modal>
 			</Section>
 		</>
 	)

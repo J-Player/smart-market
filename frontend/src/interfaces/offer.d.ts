@@ -1,13 +1,13 @@
 export interface Offer {
-	id: string
-	type?: string
-	price: number
-	startDate?: string
-	endDate?: string
-	rule?: {
-		minQuantity?: number
-		maxQuantity?: number
-		chargedQuantity?: number
-		unitMeasure?: string
+	readonly id: string
+	readonly type?: string
+	readonly price: number
+	readonly startDate?: string
+	readonly endDate?: string
+	readonly rule?: {
+		readonly minQuantity?: number
+		readonly maxQuantity?: number
+		readonly chargedQuantity?: number
+		readonly unitMeasure?: string
 	}
 }

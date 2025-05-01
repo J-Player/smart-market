@@ -1,13 +1,13 @@
 import { Offer } from './offer'
 
 export interface MarketProduct {
-	id: string
-	brand?: string
-	name: string
-	market: string
-	url?: string
-	price?: number
-	unitMeasure?: string
-	active: boolean
-	offers: Offer[]
+	readonly id: string
+	readonly brand?: string
+	readonly name: string
+	readonly market: string
+	readonly url?: string
+	readonly price?: number
+	readonly unitMeasure?: string
+	readonly active: boolean
+	readonly offers: Offer[]
 }

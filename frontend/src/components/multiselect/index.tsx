@@ -1,48 +1,55 @@
-import { useEffect, useRef, useState } from 'react'
-import './index.css'
+import { HTMLAttributes, LabelHTMLAttributes, useEffect, useRef, useState } from 'react'
+import Input from '../input'
+import { cn } from '../../utils/cn'
+import { normalizeText } from '../../utils/string-helper'
 
-function normalizeText(text: string) {
-	return text
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase()
+const Option = ({ className, children }: LabelHTMLAttributes<HTMLLabelElement>) => {
+	return (
+		<label className={cn('[&:hover]:bg-light-green flex w-full items-center gap-[10px] p-[10px]', className)}>
+			{children}
+		</label>
+	)
 }
 
-type MultiSelectProps<T> = {
+interface MultiSelectProps<T> extends HTMLAttributes<HTMLDivElement> {
 	id?: string
 	options: T[]
 	getLabel: (item: T) => string
 	getValue: (item: T) => string
 	selectedValues: string[]
-	onChange: (values: string[]) => void
+	onChangeValues: (values: string[]) => void
 	placeholder?: string
 }
 
 function MultiSelect<T>({
 	id,
+	className,
 	options,
 	getLabel,
 	getValue,
 	selectedValues,
-	onChange,
+	onChangeValues,
 	placeholder = 'Buscar...'
 }: MultiSelectProps<T>) {
 	const [search, setSearch] = useState('')
 	const [isOpen, setIsOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
 
-	console.log(options)
-
-	const filtered = options.filter(opt => normalizeText(getLabel(opt)).includes(normalizeText(search)))
+	const filtered = options.filter(opt => {
+		const [options, text] = [getLabel(opt), search].map(i => normalizeText(i).toLowerCase())
+		return options.includes(text)
+	})
 
 	const isAllSelected = selectedValues.length === options.length
 
 	const toggleSelectAll = () => {
-		onChange(isAllSelected ? [] : options.map(getValue))
+		onChangeValues(isAllSelected ? [] : options.map(getValue))
 	}
 
 	const toggleOption = (value: string) => {
-		onChange(selectedValues.includes(value) ? selectedValues.filter(v => v !== value) : [...selectedValues, value])
+		onChangeValues(
+			selectedValues.includes(value) ? selectedValues.filter(v => v !== value) : [...selectedValues, value]
+		)
 	}
 
 	useEffect(() => {
@@ -56,8 +63,10 @@ function MultiSelect<T>({
 	}, [])
 
 	return (
-		<div id={id} ref={containerRef} className="select" onClick={() => setIsOpen(true)}>
-			<input
+		<div ref={containerRef} className={cn('relative min-w-fit', className)}>
+			<Input
+				id={id}
+				className="w-full"
 				type="text"
 				placeholder={placeholder}
 				value={search}
@@ -65,20 +74,20 @@ function MultiSelect<T>({
 				onChange={e => setSearch(e.target.value)}
 			/>
 			{isOpen && (
-				<div className="dropdown-list">
+				<div className="absolute top-[calc(100%_-_2px)] right-0 left-0 z-10 flex max-h-[150px] min-w-fit flex-col overflow-y-auto rounded-b-[3px] border border-t-transparent bg-white">
 					{filtered.length > 0 && (
-						<label>
-							<input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} /> Selecionar Todos
-						</label>
+						<Option>
+							<Input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} /> Selecionar Todos
+						</Option>
 					)}
 					{filtered.map(item => {
 						const label = getLabel(item)
 						const value = getValue(item)
 						return (
-							<label key={value}>
-								<input type="checkbox" checked={selectedValues.includes(value)} onChange={() => toggleOption(value)} />
+							<Option>
+								<Input type="checkbox" checked={selectedValues.includes(value)} onChange={() => toggleOption(value)} />
 								{label}
-							</label>
+							</Option>
 						)
 					})}
 					{filtered.length === 0 && <div>Nenhum item encontrado</div>}
