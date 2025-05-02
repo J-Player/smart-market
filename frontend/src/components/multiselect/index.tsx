@@ -63,7 +63,7 @@ function MultiSelect<T>({
 	}, [])
 
 	return (
-		<div ref={containerRef} className={cn('relative min-w-fit', className)}>
+		<div ref={containerRef} className={cn('relative min-w-fit text-nowrap', className)}>
 			<Input
 				id={id}
 				className="w-full"
@@ -90,7 +90,7 @@ function MultiSelect<T>({
 							</Option>
 						)
 					})}
-					{filtered.length === 0 && <div>Nenhum item encontrado</div>}
+					{filtered.length === 0 && <Option>Nenhum item encontrado</Option>}
 				</div>
 			)}
 		</div>

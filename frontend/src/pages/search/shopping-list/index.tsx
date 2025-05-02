@@ -1,7 +1,7 @@
 import Button from '../../../components/button'
+import GenericTable, { TableColumn } from '../../../components/table'
 import { usePersistedState } from '../../../hooks/usePersistedState'
 import { Product } from '../../../models/product'
-import { cn } from '../../../utils/cn'
 
 interface ShoppingListProps {
 	items: Product[]
@@ -55,69 +55,64 @@ const ShoppingList = ({ items, removeItem }: ShoppingListProps) => {
 			return 0
 		})
 
-	type TableColumn = {
-		key: keyof Product
-		label: string
-	}
-
-	const COLUMNS: TableColumn[] = [
-		{ key: 'name', label: 'Produto' },
-		{ key: 'quantity', label: 'Quantidade' },
-		{ key: 'price', label: 'Preço (un)' },
-		{ key: 'total_price', label: 'Preço (total)' },
-		{ key: 'market', label: 'Mercado' },
-		{ key: 'offers', label: 'Ofertas' }
+	const tableColumns: TableColumn<Product>[] = [
+		{
+			key: 'name',
+			label: 'Produto',
+			sortable: true
+		},
+		{
+			key: 'quantity',
+			label: 'Quantidade',
+			sortable: true
+		},
+		{
+			key: 'price',
+			label: 'Preço (un)',
+			sortable: true,
+			render: (_, product) => `R$ ${product.price!.toFixed(2)}`
+		},
+		{
+			key: 'total_price',
+			label: 'Preço (total)',
+			sortable: true,
+			render: (_, product) => `R$ ${product.total_price.toFixed(2)}`
+		},
+		{
+			key: 'market',
+			label: 'Mercado',
+			sortable: true
+		},
+		{
+			key: 'offers',
+			label: 'Ofertas',
+			sortable: true,
+			render: (_, value) => value.offers.length
+		}
 	]
-
-	const getSortClass = (column: keyof Product) => {
-		if (sortBy !== column) return ''
-		const directionClass = sortDir === 'asc' ? 'after:content-["⬇"]' : 'after:content-["⬆"]'
-		return `text-green after:ml-1 ${directionClass}`
-	}
 
 	return (
 		<div className="text-dark-green m-auto flex min-h-0 min-w-[50vw] flex-1 flex-col gap-[10px]" id="shopping-list">
 			<h1 className="text-center font-bold uppercase">Lista de Compras</h1>
-			<div className="relative max-h-fit min-h-0 flex-1 overflow-y-auto">
-				<table className="border-collapse">
-					<thead className="sticky top-[-1px] z-10 bg-white">
-						<tr>
-							{COLUMNS.map((o, index) => {
-								return (
-									<th
-										className={cn(getSortClass(o.key), 'cursor-pointer p-[10px]')}
-										onClick={() => handleSort(o.key)}
-										key={index}>
-										{o.label}
-									</th>
-								)
-							})}
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						{sortedResult.map((p, key) => (
-							<tr
-								className="[&_td]:border-opacity-0 [&_td]:border-dark-green/25 w-full text-center [&_td]:border [&_td]:p-[10px]"
-								key={key}>
-								<td>{p.name}</td>
-								<td>{p.quantity}</td>
-								<td>{p.price}</td>
-								<td>R$ {p.total_price.toFixed(2)}</td>
-								<td>{p.market}</td>
-								<td>{p.offers.length}</td>
-								<td>
-									<Button
-										className='bg-light-pink [&:after]:bg-dark-pink relative aspect-square p-1 [&:after]:absolute [&:after]:inset-0 [&:after]:mix-blend-overlay [&:after]:content-[""]'
-										onClick={() => removeItem(p)}>
-										➖
-									</Button>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+			<GenericTable<Product>
+				data={sortedResult}
+				columns={tableColumns}
+				sortBy={sortBy}
+				sortDir={sortDir}
+				onSort={handleSort}
+				className={{
+					table: 'text-center [&_td,&_th]:p-[10px]',
+					head: 'border-dark-green sticky top-[calc(10vh_-_1px)] z-2 border-b'
+					// body: '[&_tr]:border'
+				}}
+				actions={product => (
+					<Button
+						className='bg-light-pink [&:after]:bg-dark-pink relative aspect-square p-1 [&:after]:absolute [&:after]:inset-0 [&:after]:mix-blend-overlay [&:after]:content-[""]'
+						onClick={() => removeItem(product)}>
+						➖
+					</Button>
+				)}
+			/>
 			<div className="gap-[inherit]">
 				<div className="text-dark-green flex w-full justify-between border-b p-[5px]">
 					<span className="font-bold">Quantidade total de itens:</span>

@@ -1,9 +1,12 @@
 import { FormEvent, HTMLAttributes, useEffect, useState } from 'react'
 import axios from '../../api/axios'
+import Button from '../../components/button'
 import Header from '../../components/header'
+import Input from '../../components/input'
 import Modal from '../../components/modal'
 import MultiSelect from '../../components/multiselect'
 import Section from '../../components/section'
+import GenericTable, { TableColumn } from '../../components/table'
 import { usePersistedState } from '../../hooks/usePersistedState'
 import { Market } from '../../interfaces/market'
 import { Product } from '../../interfaces/product'
@@ -12,11 +15,9 @@ import { Product as ProductModel } from '../../models/product'
 import MarketProductService from '../../services/market-product-service'
 import MarketService from '../../services/market-service'
 import ProductService from '../../services/product-service'
-import ShoppingList from './shopping-list'
-import Input from '../../components/input'
-import Button from '../../components/button'
-import { normalizeText } from '../../utils/string-helper'
 import { cn } from '../../utils/cn'
+import { normalizeText } from '../../utils/string-helper'
+import ShoppingList from './shopping-list'
 
 const initial: ProductModel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
 	v =>
@@ -87,12 +88,6 @@ const SearchPage = () => {
 			if (valA! > valB!) return sortDir === 'asc' ? 1 : -1
 			return 0
 		})
-
-	const getSortClass = (column: keyof ProductModel) => {
-		if (sortBy !== column) return ''
-		const directionClass = sortDir === 'asc' ? 'after:content-["⬇"]' : 'after:content-["⬆"]'
-		return `text-green after:ml-1 ${directionClass}`
-	}
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const val: string = e.target.value
@@ -170,17 +165,40 @@ const SearchPage = () => {
 		})
 	}, [quantity, shoppingList])
 
-	type TableColumn = {
-		key: keyof ProductModel
-		label: string
-	}
-
-	const COLUMNS: TableColumn[] = [
-		{ key: 'name', label: 'Produto' },
-		{ key: 'price', label: 'Preço (un)' },
-		{ key: 'total_price', label: 'Preço (total)' },
-		{ key: 'market', label: 'Mercado' },
-		{ key: 'offers', label: 'Ofertas' }
+	const tableColumns: TableColumn<ProductModel>[] = [
+		{
+			key: 'name',
+			label: 'Produto',
+			sortable: true
+		},
+		{
+			key: 'quantity',
+			label: 'Quantidade',
+			sortable: true
+		},
+		{
+			key: 'price',
+			label: 'Preço (un)',
+			sortable: true,
+			render: (_, product) => `R$ ${product.price!.toFixed(2)}`
+		},
+		{
+			key: 'total_price',
+			label: 'Preço (total)',
+			sortable: true,
+			render: (_, product) => `R$ ${product.total_price.toFixed(2)}`
+		},
+		{
+			key: 'market',
+			label: 'Mercado',
+			sortable: true
+		},
+		{
+			key: 'offers',
+			label: 'Ofertas',
+			sortable: true,
+			render: (_, value) => value.offers.length
+		}
 	]
 
 	return (
@@ -275,66 +293,39 @@ const SearchPage = () => {
 										id="quantity"
 										value={displayValue}
 										onChange={handleChange}
+										placeholder="Quantidade do produto"
 										required
 									/>
 								</div>
-								<table className="relative w-full border-collapse border text-nowrap">
-									<thead className="bg-dark-green text-light-green sticky top-[calc(10vh_-_1px)] z-2">
-										<tr>
-											{COLUMNS.map((o, index) => {
-												return (
-													<th
-														className={cn(getSortClass(o.key), 'cursor-pointer p-[10px]')}
-														onClick={() => handleSort(o.key)}
-														key={index}>
-														{o.label}
-													</th>
-												)
-											})}
-											<th></th>
-										</tr>
-									</thead>
-									<tbody>
-										{sortedResult
-											.filter(p => p.active)
-											.map((p, key) => {
-												return (
-													!(shoppingList.find(i => i.id === p.id) && hideItemAdded) && (
-														<tr
-															className={cn(
-																'border-y [&>td]:p-[10px] [&>td]:text-center',
-																shoppingList.find(i => i.id === p.id)
-																	? 'bg-light-pink text-dark-pink'
-																	: 'text-dark-green [&:hover]:bg-light-green'
-															)}
-															key={key}>
-															<td>{p.name}</td>
-															<td>R$ {p.price?.toFixed(2)}</td>
-															<td>R$ {p.total_price.toFixed(2)}</td>
-															<td>{p.market}</td>
-															<td>{p.offers.length}</td>
-															<td className="[&_button]:relative [&_button]:p-[5px] [&_button:after]:absolute [&_button:after]:inset-0 [&_button:after]:mix-blend-overlay [&_button:after]:content-['']">
-																{!shoppingList.find(i => i.id === p.id) ? (
-																	<Button
-																		className="bg-green border-dark-green [&:after]:bg-dark-green"
-																		onClick={() => addItemToList(p)}
-																		disabled={!quantity}>
-																		➕
-																	</Button>
-																) : (
-																	<Button
-																		className="bg-pink border-dark-pink [&:after]:bg-dark-pink"
-																		onClick={() => subItemToList(p)}>
-																		➖
-																	</Button>
-																)}
-															</td>
-														</tr>
-													)
-												)
-											})}
-									</tbody>
-								</table>
+								<GenericTable<ProductModel>
+									data={sortedResult}
+									className={{
+										table: 'relative w-full text-center text-nowrap',
+										head: 'bg-dark-green text-light-green sticky top-[calc(10vh_-_1px)] z-2 [&_th]:p-[10px]',
+										body: '[&_td]:border-dark-green/25 [&_td]:border [&_td]:p-[10px] [&_tr]:hover:bg-[linear-gradient(rgba(0,255,0,0.05)_0_0)]'
+									}}
+									columns={tableColumns}
+									sortBy={sortBy}
+									sortDir={sortDir}
+									onSort={handleSort}
+									filter={p => !(shoppingList.find(i => i.id === p.id) && hideItemAdded)}
+									actions={p =>
+										!shoppingList.find(i => i.id === p.id) ? (
+											<Button
+												className="bg-light-green border-dark-green [&:after]:bg-dark-green relative p-[5px] after:absolute after:inset-0 after:mix-blend-overlay after:content-['']"
+												onClick={() => addItemToList(p)}
+												disabled={!quantity}>
+												➕
+											</Button>
+										) : (
+											<Button
+												className="bg-light-pink border-dark-pink [&:after]:bg-dark-pink relative p-[5px] after:absolute after:inset-0 after:mix-blend-overlay after:content-['']"
+												onClick={() => subItemToList(p)}>
+												➖
+											</Button>
+										)
+									}
+								/>
 							</div>
 						)}
 						<Button
