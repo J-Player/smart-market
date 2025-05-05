@@ -94,59 +94,63 @@ const ShoppingList = ({ items, removeItem }: ShoppingListProps) => {
 	return (
 		<div className="text-dark-green m-auto flex min-h-0 min-w-[50vw] flex-1 flex-col gap-[10px]" id="shopping-list">
 			<h1 className="text-center font-bold uppercase">Lista de Compras</h1>
-			<GenericTable<Product>
-				data={sortedResult}
-				columns={tableColumns}
-				sortBy={sortBy}
-				sortDir={sortDir}
-				onSort={handleSort}
-				className={{
-					table: 'text-center [&_td,&_th]:p-[10px]',
-					head: 'border-dark-green sticky top-[calc(10vh_-_1px)] z-2 border-b'
-					// body: '[&_tr]:border'
-				}}
-				actions={product => (
-					<Button
-						className='bg-light-pink [&:after]:bg-dark-pink relative aspect-square p-1 [&:after]:absolute [&:after]:inset-0 [&:after]:mix-blend-overlay [&:after]:content-[""]'
-						onClick={() => removeItem(product)}>
-						➖
-					</Button>
-				)}
-			/>
-			<div className="gap-[inherit]">
-				<div className="text-dark-green flex w-full justify-between border-b p-[5px]">
-					<span className="font-bold">Quantidade total de itens:</span>
-					<span>
-						{items.reduce((prev, curr) => {
-							if (curr.quantity) {
-								return prev + curr.quantity
-							}
-							return prev + 0
-						}, 0)}
-					</span>
+			<div className="grid h-full grid-rows-[1fr_auto] gap-[inherit]">
+				<div className="max-h-[150px] min-h-0 overflow-y-auto">
+					<GenericTable<Product>
+						data={sortedResult}
+						columns={tableColumns}
+						sortBy={sortBy}
+						sortDir={sortDir}
+						onSort={handleSort}
+						className={{
+							table: 'text-center [&_td,&_th]:p-[10px]',
+							head: 'border-dark-green sticky top-[-1px] z-2 border-b bg-white',
+							body: '[&_td]:border-dark-green/25 [&_td]:border [&_td]:p-[10px] [&_tr]:hover:bg-[linear-gradient(rgba(0,255,0,0.05)_0_0)]'
+						}}
+						actions={product => (
+							<Button
+								className='bg-light-pink [&:after]:bg-dark-pink relative aspect-square p-1 [&:after]:absolute [&:after]:inset-0 [&:after]:mix-blend-overlay [&:after]:content-[""]'
+								onClick={() => removeItem(product)}>
+								➖
+							</Button>
+						)}
+					/>
 				</div>
-				<div className="flex min-h-0 flex-1 flex-col gap-[inherit] border-none">
-					<span className="font-bold">Valor Total (por mercado):</span>
-					<ul className="max-h-[20vh] min-h-0 flex-1 overflow-y-auto">
-						{[...new Set(items.map(item => item.market))].map((market, index) => (
-							<li className="ml-[20px] flex justify-between border-b border-dashed py-[5px] capitalize" key={index}>
-								<span className="market">{market}</span>
-								<span className="quantity">
-									R${' '}
-									{items
-										.filter(i => i.market === market)
-										.reduce((total, curr) => (curr.total_price ? total + curr.total_price : 0), 0)
-										.toFixed(2)}
-								</span>
-							</li>
-						))}
-					</ul>
-				</div>
-				<div>
-					<span className="font-bold">Valor Total:</span>
-					<span className="font-bold">
-						R$ {items.reduce((total, curr) => (curr.total_price ? total + curr.total_price : 0), 0).toFixed(2)}
-					</span>
+				<div className="flex min-h-0 flex-col gap-[10px]">
+					<div className="text-dark-green border-dark-green flex w-full justify-between border-b">
+						<span className="font-bold">Quantidade total de itens:</span>
+						<span>
+							{items.reduce((prev, curr) => {
+								if (curr.quantity) {
+									return prev + curr.quantity
+								}
+								return prev + 0
+							}, 0)}
+						</span>
+					</div>
+					<div className="flex flex-1 flex-col gap-[10px]">
+						<span className="font-bold">Valor Total (por mercado):</span>
+						<ul className="max-h-[150px] min-h-0 overflow-y-auto">
+							{[...new Set(items.map(item => item.market))].map((market, index) => (
+								<li className="ml-[20px] flex justify-between border-b border-dashed py-[5px] capitalize" key={index}>
+									<span className="market">{market}</span>
+									<span className="quantity">
+										R${' '}
+										{items
+											.filter(i => i.market === market)
+											.reduce((total, curr) => (curr.total_price ? total + curr.total_price : 0), 0)
+											.toFixed(2)}
+									</span>
+								</li>
+							))}
+						</ul>
+					</div>
+					<div className="text-dark-green border-dark-green flex w-full justify-between border-b">
+						<span className="font-bold">Valor Total:</span>
+						<span className="font-bold">
+							R$ {items.reduce((total, curr) => (curr.total_price ? total + curr.total_price : 0), 0).toFixed(2)}
+						</span>
+					</div>
 				</div>
 			</div>
 			<div className="flex justify-end gap-[10px]">
