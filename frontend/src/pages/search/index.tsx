@@ -18,6 +18,7 @@ import ProductService from '../../services/product-service'
 import { cn } from '../../utils/cn'
 import { normalizeText } from '../../utils/string-helper'
 import ShoppingList from './shopping-list'
+import { Link } from 'react-router-dom'
 
 const initial: ProductModel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
 	v =>
@@ -201,9 +202,26 @@ const SearchPage = () => {
 		}
 	]
 
+	const menu = [
+		{ href: '/search', value: 'Pesquisar' },
+		{ href: '/account', value: 'Conta' }
+	] as const
+
 	return (
 		<>
-			<Header hrefLogo="/" />
+			<Header hrefLogo="/">
+				<nav className="flex min-w-full">
+					<ul className="flex h-full w-full items-center justify-around">
+						{menu.map((i, key) => (
+							<li key={key}>
+								<Link className="[&:hover,&:focus]:text-green outline-none" to={i.href}>
+									{i.value}
+								</Link>
+							</li>
+						))}
+					</ul>
+				</nav>
+			</Header>
 			<Section id="search">
 				<div className="grid min-h-[100vh] place-items-center bg-white p-[10vh]">
 					<div className="relative flex flex-col gap-[10px]">
