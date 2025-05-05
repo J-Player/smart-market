@@ -37,14 +37,14 @@ const Modal = ({ children, show, scrollToTop, onClose: close }: ModalProps) => {
 	if (show) {
 		if (scrollToTop) window.scrollTo({ top: 0 })
 		return usePortal(
-			<div id="modal" className="fixed inset-0 z-[1000] grid place-items-center bg-black/[0.5]">
-				<div className="fixed top-1/2 z-[inherit] flex h-fit max-h-[90vh] -translate-y-1/2 flex-col justify-center gap-4 overflow-hidden rounded-[3px] bg-white p-[20px]">
+			<div id="modal" className="fixed inset-0 z-[1000] grid place-items-center bg-black/50">
+				<div className="relative z-[inherit] flex max-h-[90vh] max-w-[80vw] flex-col rounded-[3px] bg-white p-5">
 					<Button
-						className="text-dark-green hover:text-red focus:text-red aspect-square cursor-pointer self-end border-none bg-transparent p-0 hover:bg-transparent"
+						className="text-dark-green hover:text-red aspect-square self-end border-none bg-transparent p-0"
 						onClick={handlerClose}>
 						✖
 					</Button>
-					{children}
+					<div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto">{children}</div>
 				</div>
 			</div>
 		)
