@@ -1,4 +1,5 @@
 import { FormEvent, HTMLAttributes, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import axios from '../../api/axios'
 import Button from '../../components/button'
 import Header from '../../components/header'
@@ -16,30 +17,7 @@ import MarketProductService from '../../services/market-product-service'
 import MarketService from '../../services/market-service'
 import ProductService from '../../services/product-service'
 import { cn } from '../../utils/cn'
-import { normalizeText } from '../../utils/string-helper'
 import ShoppingList from './shopping-list'
-import { Link } from 'react-router-dom'
-
-const initial: ProductModel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
-	v =>
-		new ProductModel({
-			id: `${v}`,
-			name: `produto_${v}`,
-			active: true,
-			market: `mercado_${Math.round(Math.random() * 10)}`,
-			price: Math.round(Math.random() * 10),
-			offers: []
-		})
-)
-
-const initialMarket: Market[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
-	(v, index) =>
-		({
-			id: `${index}`,
-			name: `mercado_${v}`,
-			website: `www.${normalizeText(`${v}`).toLowerCase()}.com.br`
-		}) as Market
-)
 
 const Tag = ({ children, className }: HTMLAttributes<HTMLSpanElement>) => {
 	return (
@@ -52,13 +30,13 @@ const Tag = ({ children, className }: HTMLAttributes<HTMLSpanElement>) => {
 
 const SearchPage = () => {
 	const [products, setProducts] = usePersistedState<Product[]>('product-list', [], 'sessionstorage')
-	const [markets, setMarkets] = usePersistedState<Market[]>('market-list', initialMarket, 'sessionstorage')
+	const [markets, setMarkets] = usePersistedState<Market[]>('market-list', [], 'sessionstorage')
 	const [quantity, setQuantity] = useState<number | undefined>()
 	const [displayValue, setDisplayValue] = useState('')
 	const [shoppingList, setShoppingList] = usePersistedState<ProductModel[]>('shopping-list', [], 'localstorage')
 	const [showShoppingList, setShowShoppingList] = useState<boolean>(false)
 	const [hideItemAdded, setHideItemAdded] = useState<boolean>(false)
-	const [result, setResult] = useState<ProductModel[]>(initial)
+	const [result, setResult] = useState<ProductModel[]>([])
 
 	const [product, setProduct] = useState<string>('')
 	const [marketsSelected, setMarketsSeleted] = useState<string[]>([])
