@@ -202,7 +202,7 @@ const SearchPage = () => {
 			</Header>
 			<Section id="search">
 				<div className="grid min-h-[100vh] place-items-center bg-white p-[10vh]">
-					<div className="relative flex flex-col gap-[10px]">
+					<div className="relative min-w-[50%] flex flex-col gap-[10px]">
 						<form className="flex flex-col gap-[inherit]" method="post" onReset={handleReset} onSubmit={handleSubmit}>
 							<div className="flex items-center gap-[inherit]">
 								<label htmlFor="product">Produto:</label>
